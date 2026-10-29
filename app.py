@@ -272,6 +272,9 @@ if "final_report" not in st.session_state:
 if "active_role" not in st.session_state:
     st.session_state.active_role = ROLES[0]
 
+if "chat_session" not in st.session_state:
+    st.session_state.chat_session = None
+
 # ==============================================================================
 # 6. BARRA LATERAL (SELECTOR DE ROL Y BOTÓN DE REINICIO)
 # ==============================================================================
@@ -355,20 +358,24 @@ if api_key and ("client" not in st.session_state or st.session_state.get("curren
 
 # Inicializar sesión de chat si no existe o cambió el rol/modelo
 if api_key and "client" in st.session_state and (
-    st.session_state.chat_session is None
+    st.session_state.get("chat_session") is None
     or st.session_state.get("chat_model") != selected_model
     or st.session_state.get("chat_role") != selected_role
 ):
-    system_instruction = build_system_instruction(selected_role)
-    st.session_state.chat_session = st.session_state.client.chats.create(
-        model=selected_model,
-        config=types.GenerateContentConfig(
-            system_instruction=system_instruction,
-            temperature=0.6
+    try:
+        system_instruction = build_system_instruction(selected_role)
+        st.session_state.chat_session = st.session_state.client.chats.create(
+            model=selected_model,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.6
+            )
         )
-    )
-    st.session_state.chat_model = selected_model
-    st.session_state.chat_role = selected_role
+        st.session_state.chat_model = selected_model
+        st.session_state.chat_role = selected_role
+    except Exception as e:
+        st.error(f"❌ Error al iniciar sesión de chat con el modelo '{selected_model}': {e}")
+        st.stop()
 
 # Si no hay mensajes en la sesión, generar el saludo inicial y Pregunta 1
 if api_key and st.session_state.get("chat_session") is not None and len(st.session_state.messages) == 0:
@@ -517,7 +524,7 @@ if st.session_state.interview_completed:
     st.subheader("📑 Reporte Visual de Evaluación Técnica y Dictamen")
 
     # Generar el reporte final si aún no existe en session_state
-    if not st.session_state.final_report:
+    if not st.session_state.get("final_report"):
         with st.spinner("🤖 El Líder Técnico está analizando tus respuestas y elaborando el reporte final..."):
             try:
                 report_content = generate_evaluation_report(
@@ -531,7 +538,7 @@ if st.session_state.interview_completed:
                 st.error(f"❌ Error al generar el reporte final con Gemini: {e}")
                 st.stop()
 
-    if st.session_state.final_report:
+    if st.session_state.get("final_report"):
         report_text = st.session_state.final_report
 
         # Extraer puntuación numérica mediante regex

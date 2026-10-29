@@ -143,13 +143,35 @@ with st.sidebar:
             api_key = api_key_input
             st.session_state.manual_api_key = api_key_input
 
-    # Selector de modelo Gemini
-    selected_model = st.selectbox(
+    # Selector de modelo Gemini (permite alternar si un modelo está saturado)
+    model_options = [
+        "gemini-3.5-flash",
+        "gemini-3.8-flash",
+        "gemini-3.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+        "gemini-1.5-flash",
+        "Otro (personalizado)"
+    ]
+    model_choice = st.selectbox(
         "🧠 Modelo Backend",
-        options=["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
+        options=model_options,
         index=0,
-        help="Modelo de Google Gemini para conducir la entrevista y emitir el reporte."
+        help="Modelo de Google Gemini para la entrevista. Si la versión 3.8 está saturada, puedes seleccionar 3.5 u otra opción."
     )
+    if model_choice == "Otro (personalizado)":
+        selected_model = st.text_input("Identificador del modelo:", value="gemini-3.5-flash").strip()
+    else:
+        selected_model = model_choice
+
+    # Si el usuario cambia de modelo, reiniciamos limpiamente la sesión
+    if "active_model" not in st.session_state:
+        st.session_state.active_model = selected_model
+    elif selected_model != st.session_state.active_model:
+        st.session_state.active_model = selected_model
+        if "active_role" in st.session_state:
+            reset_interview_state(st.session_state.active_role)
+        st.rerun()
 
 # ==============================================================================
 # 4. FUNCIONES DE PROMPTS Y SYSTEM INSTRUCTIONS

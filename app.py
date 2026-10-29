@@ -146,7 +146,7 @@ with st.sidebar:
     # Selector de modelo Gemini
     selected_model = st.selectbox(
         "🧠 Modelo Backend",
-        options=["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
+        options=["gemini-3.8-flash", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"],
         index=0,
         help="Modelo de Google Gemini para conducir la entrevista y emitir el reporte."
     )
